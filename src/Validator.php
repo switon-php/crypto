@@ -26,7 +26,7 @@ use const FILTER_VALIDATE_EMAIL;
  * - <code>?rule</code> short-circuits empty string values before base validation
  * - Empty string values otherwise pass only rules whose own predicate accepts them
  * - <code>Cipher::decrypt()</code> converts a false result into <code>ValidationFailedException</code>
- * - invalid rule declarations raise <code>Exception</code> instead of returning false
+ * - invalid rule declarations fail validation instead of raising exceptions
  *
  * @see \Switon\Crypto\ValidatorInterface
  * @see \Switon\Crypto\Cipher::decrypt()
@@ -40,14 +40,7 @@ class Validator implements ValidatorInterface
         if (is_string($rule)) {
             if ($rule !== '' && $rule[0] === '?') {
                 if ($value === '') {
-                    if ($rule === '?') {
-                        Exception::raise(
-                            'Invalid validator rule "{rule}". Use: ascii, utf8, json, numeric, base64, uuid, email, ?rule, or a callable.',
-                            ['rule' => $rule]
-                        );
-                    }
-
-                    return true;
+                    return $rule !== '?';
                 }
 
                 $rule = substr($rule, 1);
@@ -61,21 +54,15 @@ class Validator implements ValidatorInterface
                 'base64' => $this->isBase64($value),
                 'uuid' => $this->isUuid($value),
                 'email' => $this->isEmail($value),
-                default => Exception::raise(
-                    'Invalid validator rule "{rule}". Use: ascii, utf8, json, numeric, base64, uuid, email, ?rule, or a callable.',
-                    ['rule' => $rule]
-                ),
+                default => false,
             };
         }
 
         if (!is_callable($rule)) {
-            Exception::raise(
-                'Invalid validator rule "{rule}". Use: ascii, utf8, json, numeric, base64, uuid, email, ?rule, or a callable.',
-                ['rule' => get_debug_type($rule)]
-            );
+            return false;
         }
 
-        return (bool)$rule($value);
+        return (bool) $rule($value);
     }
 
     /**

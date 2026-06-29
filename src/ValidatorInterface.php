@@ -15,7 +15,7 @@ namespace Switon\Crypto;
  * - Prefix a built-in rule with <code>?</code> to allow empty string values
  * - <code>Cipher::decrypt()</code> calls this service when a decrypt rule is provided
  * - <code>RotatingCipher</code> relies on these checks to decide legacy fallback
- * - false means structure mismatch; invalid rule definitions raise exceptions
+ * - false means structure mismatch; invalid rule definitions also return false
  *
  * @see \Switon\Crypto\CipherInterface
  * @see \Switon\Crypto\RotatingCipher
@@ -30,8 +30,7 @@ interface ValidatorInterface
      * Built-in rules: <code>ascii</code>, <code>utf8</code>, <code>json</code>, <code>numeric</code>,
      * <code>base64</code>, <code>uuid</code>, <code>email</code>. Prefix a built-in rule with <code>?</code> to
      * allow empty string values. Custom rules may be provided as <code>fn(string $value): bool</code>.
-     *
-     * @throws \Switon\Crypto\Exception When the rule name or rule type is invalid
+     * Unknown built-in rule names and unsupported rule types return false.
      */
     public function validate(string $value, mixed $rule): bool;
 }

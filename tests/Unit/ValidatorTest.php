@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Switon\Crypto\Tests\Unit;
 
-use Switon\Crypto\Exception;
 use Switon\Crypto\Tests\TestCase;
 use Switon\Crypto\Validator;
 
@@ -113,26 +112,22 @@ class ValidatorTest extends TestCase
 
     public function testValidateRejectsInvalidRuleType(): void
     {
-        $this->expectException(Exception::class);
-        $this->validator->validate('test', ['bad']);
+        $this->assertFalse($this->validator->validate('test', ['bad']));
     }
 
     public function testValidateRejectsUnknownBuiltInRuleString(): void
     {
-        $this->expectException(Exception::class);
-        $this->validator->validate('test', 'xml');
+        $this->assertFalse($this->validator->validate('test', 'xml'));
     }
 
-    public function testBareQuestionMarkRuleRaisesForNonEmptyValue(): void
+    public function testBareQuestionMarkRuleRejectsNonEmptyValue(): void
     {
-        $this->expectException(Exception::class);
-        $this->validator->validate('anything', '?');
+        $this->assertFalse($this->validator->validate('anything', '?'));
     }
 
-    public function testBareQuestionMarkRaisesForEmptyValue(): void
+    public function testBareQuestionMarkRejectsEmptyValue(): void
     {
-        $this->expectException(Exception::class);
-        $this->validator->validate('', '?');
+        $this->assertFalse($this->validator->validate('', '?'));
     }
 
     public function testUtf8RejectsAsciiControlCharacter(): void
