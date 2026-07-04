@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Switon\Crypto\Tests\Unit;
 
-use Switon\Crypto\Tests\TestCase;
+use PHPUnit\Framework\TestCase;
 use Switon\Crypto\Validator;
 
 class ValidatorTest extends TestCase
@@ -13,13 +13,17 @@ class ValidatorTest extends TestCase
 
     protected function setUp(): void
     {
-        parent::setUp();
         $this->validator = new Validator();
     }
 
     public function testValidateAcceptsUtf8Rule(): void
     {
         $this->assertTrue($this->validator->validate('中文测试', 'utf8'));
+    }
+
+    public function testValidateUtf8AcceptsEmptyString(): void
+    {
+        $this->assertTrue($this->validator->validate('', 'utf8'));
     }
 
     public function testValidateUtf8RejectsInvalidEncoding(): void

@@ -32,7 +32,6 @@ use Switon\Crypto\Exception\MissingDecryptRuleException;
 class RotatingCipher implements CipherInterface
 {
     #[Autowired] protected CipherInterface $newCipher;
-
     #[Autowired] protected CipherInterface $legacyCipher;
 
     /** {@inheritDoc} */
