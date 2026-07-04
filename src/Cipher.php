@@ -14,9 +14,6 @@ use Switon\Crypto\Exception\IVGenerationException;
 use Switon\Crypto\Exception\ValidationFailedException;
 use ValueError;
 
-use function openssl_decrypt;
-use function openssl_encrypt;
-use function openssl_random_pseudo_bytes;
 use function strlen;
 use function substr;
 
@@ -69,10 +66,18 @@ class Cipher implements CipherInterface
 
     #[Autowired] protected ValidatorInterface $validator;
 
-    public function __construct()
+    /**
+     * OpenSSL seam. Bound by the container in production; tests pass a stub that can fail on demand.
+     * Defaults to the global-function implementation so manual construction keeps working.
+     */
+    protected OpensslInterface $openssl;
+
+    public function __construct(?OpensslInterface $openssl = null)
     {
-        $keyLength = openssl_cipher_key_length($this->method);
-        $ivLength = openssl_cipher_iv_length($this->method);
+        $this->openssl = $openssl ?? new Openssl();
+
+        $keyLength = $this->openssl->cipherKeyLength($this->method);
+        $ivLength = $this->openssl->cipherIvLength($this->method);
 
         if (!is_int($keyLength) || !is_int($ivLength) || $keyLength <= 0 || $ivLength <= 0) {
             throw new ValueError(sprintf('Invalid OpenSSL cipher method "%s".', $this->method));
@@ -94,34 +99,34 @@ class Cipher implements CipherInterface
 
         $iv_length = $this->ivLength;
         /** @noinspection CryptographicallySecureRandomnessInspection */
-        if (!$iv = openssl_random_pseudo_bytes($iv_length)) {
+        if (!$iv = $this->openssl->randomPseudoBytes($iv_length)) {
             IVGenerationException::raise('Failed to generate IV for "{method}" encryption.', [
                 'method' => $this->method,
                 'iv_length' => $iv_length,
-                'openssl_error' => openssl_error_string()
+                'openssl_error' => $this->openssl->errorString()
             ]);
         }
 
         if ($this->isAead) {
             $tag = '';
-            $encrypted = openssl_encrypt($text, $this->method, $derivedKey, OPENSSL_RAW_DATA, $iv, $tag, '', self::AEAD_TAG_LENGTH);
+            $encrypted = $this->openssl->encrypt($text, $this->method, $derivedKey, OPENSSL_RAW_DATA, $iv, $tag, '', self::AEAD_TAG_LENGTH);
 
             if ($encrypted === false) {
                 EncryptionFailedException::raise('Failed to encrypt data with method "{method}".', [
                     'method' => $this->method,
-                    'openssl_error' => openssl_error_string()
+                    'openssl_error' => $this->openssl->errorString()
                 ]);
             }
 
             return $iv . $encrypted . $tag;
         }
 
-        $encrypted = openssl_encrypt($text, $this->method, $derivedKey, OPENSSL_RAW_DATA, $iv);
+        $encrypted = $this->openssl->encrypt($text, $this->method, $derivedKey, OPENSSL_RAW_DATA, $iv);
 
         if ($encrypted === false) {
             EncryptionFailedException::raise('Failed to encrypt data with method "{method}".', [
                 'method' => $this->method,
-                'openssl_error' => openssl_error_string()
+                'openssl_error' => $this->openssl->errorString()
             ]);
         }
 
@@ -149,16 +154,16 @@ class Cipher implements CipherInterface
         if ($this->isAead) {
             $tag = substr($text, -self::AEAD_TAG_LENGTH);
             $encrypted = substr($text, $iv_length, -self::AEAD_TAG_LENGTH);
-            $decrypted = openssl_decrypt($encrypted, $this->method, $derivedKey, OPENSSL_RAW_DATA, $iv, $tag);
+            $decrypted = $this->openssl->decrypt($encrypted, $this->method, $derivedKey, OPENSSL_RAW_DATA, $iv, $tag);
         } else {
             $encrypted = substr($text, $iv_length);
-            $decrypted = openssl_decrypt($encrypted, $this->method, $derivedKey, OPENSSL_RAW_DATA, $iv);
+            $decrypted = $this->openssl->decrypt($encrypted, $this->method, $derivedKey, OPENSSL_RAW_DATA, $iv);
         }
 
         if ($decrypted === false) {
             DecryptionFailedException::raise('Failed to decrypt data with method "{method}".', [
                 'method' => $this->method,
-                'openssl_error' => openssl_error_string()
+                'openssl_error' => $this->openssl->errorString()
             ]);
         }
 
