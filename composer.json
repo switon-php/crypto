@@ -46,9 +46,6 @@
         }
     },
     "autoload-dev": {
-        "files": [
-            "tests/openssl-overrides.php"
-        ],
         "psr-4": {
             "Switon\\Crypto\\Tests\\": "tests/"
         }

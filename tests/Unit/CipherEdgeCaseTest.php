@@ -8,12 +8,62 @@ use Switon\Crypto\Cipher;
 use Switon\Crypto\CipherInterface;
 use Switon\Crypto\Exception\DataTooShortException;
 use Switon\Crypto\Exception\DecryptionFailedException;
+use Switon\Crypto\Exception\EncryptionFailedException;
 use Switon\Crypto\Exception\InvalidRawKeyException;
+use Switon\Crypto\Exception\IVGenerationException;
+use Switon\Crypto\Tests\Fixtures\FailingOpenssl;
 use Switon\Crypto\Tests\TestCase;
 use ValueError;
 
 class CipherEdgeCaseTest extends TestCase
 {
+    public function testEncryptRaisesWhenIvGenerationFails(): void
+    {
+        $openssl = new FailingOpenssl();
+        $openssl->failRandomBytes = true;
+
+        $cipher = $this->container->make(Cipher::class, [
+            'openssl' => $openssl,
+            'secret' => 'secret-for-iv-fail',
+            'method' => 'AES-128-CBC',
+        ]);
+
+        $this->expectException(IVGenerationException::class);
+        $cipher->encrypt('payload', 'salt-key');
+    }
+
+    public function testEncryptRaisesWhenCbcEncryptionFails(): void
+    {
+        $openssl = new FailingOpenssl();
+        $openssl->failEncrypt = true;
+
+        $cipher = $this->container->make(Cipher::class, [
+            'openssl' => $openssl,
+            'secret' => 'secret-for-encrypt-fail',
+            'method' => 'AES-128-CBC',
+        ]);
+
+        $this->expectException(EncryptionFailedException::class);
+        $cipher->encrypt('payload', 'salt-key');
+    }
+
+    public function testEncryptRaisesWhenGcmEncryptionFails(): void
+    {
+        $openssl = new FailingOpenssl();
+        $openssl->failEncrypt = true;
+
+        $cipher = $this->container->make(CipherInterface::class, [
+            'class' => Cipher::class,
+            'openssl' => $openssl,
+            'secret' => 'secret-for-gcm-encrypt-fail',
+            'method' => 'AES-256-GCM',
+            'algo' => 'sha256',
+        ]);
+
+        $this->expectException(EncryptionFailedException::class);
+        $cipher->encrypt('payload', 'salt-key');
+    }
+
     public function testRawModeRejectsInvalidRawKey(): void
     {
         $cipher = $this->container->make(Cipher::class, [
