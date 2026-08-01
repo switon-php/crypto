@@ -20,7 +20,7 @@
     "support": {
         "source": "https://github.com/switon-php/crypto",
         "issues": "https://github.com/switon-php/crypto/issues",
-        "docs": "https://docs.switon.dev/latest/crypto"
+        "docs": "https://github.com/switon-php/crypto/blob/main/docs/README.md"
     },
     "require": {
         "php": ">=8.3",

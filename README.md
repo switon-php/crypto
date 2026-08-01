@@ -38,7 +38,7 @@ final class UserSecretService
 }
 ```
 
-Docs: https://docs.switon.dev/latest/crypto
+Docs: https://github.com/switon-php/crypto/blob/main/docs/README.md
 
 ## License
 
