@@ -6,6 +6,13 @@ namespace Switon\Crypto\Tests\Fixtures;
 
 use Switon\Crypto\OpensslInterface;
 
+use function openssl_cipher_iv_length;
+use function openssl_cipher_key_length;
+use function openssl_decrypt;
+use function openssl_encrypt;
+use function openssl_error_string;
+use function openssl_random_pseudo_bytes;
+
 /**
  * Routes OpenSSL calls to the global functions, with switches that force failures.
  *
@@ -23,12 +30,12 @@ class FailingOpenssl implements OpensslInterface
 
     public function cipherIvLength(string $cipherAlgo): int|false
     {
-        return \openssl_cipher_iv_length($cipherAlgo);
+        return openssl_cipher_iv_length($cipherAlgo);
     }
 
     public function cipherKeyLength(string $cipherAlgo): int|false
     {
-        return \openssl_cipher_key_length($cipherAlgo);
+        return openssl_cipher_key_length($cipherAlgo);
     }
 
     public function randomPseudoBytes(int $length): string|false
@@ -39,7 +46,7 @@ class FailingOpenssl implements OpensslInterface
 
         $strong = null;
 
-        return \openssl_random_pseudo_bytes($length, $strong);
+        return openssl_random_pseudo_bytes($length, $strong);
     }
 
     public function encrypt(
@@ -56,7 +63,7 @@ class FailingOpenssl implements OpensslInterface
             return false;
         }
 
-        return \openssl_encrypt($data, $cipherAlgo, $passphrase, $options, $iv, $tag, $aad, $tagLength);
+        return openssl_encrypt($data, $cipherAlgo, $passphrase, $options, $iv, $tag, $aad, $tagLength);
     }
 
     public function decrypt(
@@ -71,11 +78,11 @@ class FailingOpenssl implements OpensslInterface
             return false;
         }
 
-        return \openssl_decrypt($data, $cipherAlgo, $passphrase, $options, $iv, $tag);
+        return openssl_decrypt($data, $cipherAlgo, $passphrase, $options, $iv, $tag);
     }
 
     public function errorString(): string|false
     {
-        return \openssl_error_string();
+        return openssl_error_string();
     }
 }
